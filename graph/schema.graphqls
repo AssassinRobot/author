@@ -1,0 +1,112 @@
+type Author {
+  id:ID!
+  name: String!
+  born:String!
+  died:String!
+  books: [Book!]!
+}
+
+type Book {
+  id:ID!
+  name:String!
+  publication:Int! 
+  authors:[Author!]!
+  genres:[Genre!]!
+  pages:Int!
+  language:Language!
+}
+
+type Genre {
+  id:ID!
+  name:String!
+}
+
+type Language {
+  id:ID!
+  name:String!
+}
+
+
+type Query {
+  books: [Book!]!
+  authors: [Author!]!
+  genres: [Genre!]!
+  languages: [Language!]!
+  getBookByID(ID:ID!):Book!
+  getBooksByName(name:String!):[Book!]!
+  getBooksByLanguageID(languageID:ID!):[Book!]!
+  getBooksByGenreID(genreID:ID!):[Book!]!
+  getBooksByAuthorID(authorID:ID!):[Book!]!
+  getBooksByPublicationDate(publicationDate:Int!):[Book!]!
+  getAuthorByID(ID:ID!):Author!
+  getAuthorsByName(name:String!):[Author!]!
+  getAuthorsByBookID(bookID:ID!):Author!
+}
+
+input NewAuthor {
+  name: String!
+  born:String!
+  died:String!
+  booksID: [ID!]!
+}
+
+input NewBook {
+  name:String!
+  publication:Int! 
+  authorsID: [ID!]!
+  genresID: [ID!]!  
+  languageID: ID!    
+  pages:Int!
+}
+
+input NewLanguage {
+  name: String!
+}
+
+input NewGenre {
+  name:String!
+}
+
+
+input updateAuthor {
+  id: ID!
+  name: String!
+  born:String!
+  died:String!
+  booksID: [ID!]!
+}
+
+input updateBook {
+  id: ID!
+  name:String!
+  publication:Int! 
+  authorIDs: [ID!]!
+  genreIDs: [ID!]!  
+  languageID: ID!    
+  pages:Int!
+}
+
+input updateLanguage {
+  id: ID!
+  name: String!
+}
+
+input updateGenre {
+  id: ID!
+  name:String!
+}
+
+type Mutation {
+  createAuthor(input: NewAuthor!):Author!
+  createBook(input:NewBook!):Book!
+  createLanguage(input:NewLanguage!):Language!
+  createNewGenre(input:NewGenre!):Genre!
+  updateAuthor(input:updateAuthor!): Author!
+  updateBook(input:updateBook!): Book!
+  updateLanguage(input:updateLanguage!): Language!
+  updateGenre(input:updateGenre!): Genre!
+  deleteAuthorByID(id:ID!):ID!
+  deleteBookByID(id:ID!):ID!
+  deleteLanguageByID(id:ID!):ID!
+  deleteGenreByID(id:ID!):ID!
+}

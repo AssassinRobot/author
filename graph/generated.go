@@ -66,13 +66,15 @@ type ComplexityRoot struct {
 	}
 
 	Genre struct {
-		ID   func(childComplexity int) int
-		Name func(childComplexity int) int
+		Books func(childComplexity int) int
+		ID    func(childComplexity int) int
+		Name  func(childComplexity int) int
 	}
 
 	Language struct {
-		ID   func(childComplexity int) int
-		Name func(childComplexity int) int
+		Books func(childComplexity int) int
+		ID    func(childComplexity int) int
+		Name  func(childComplexity int) int
 	}
 
 	Mutation struct {
@@ -95,7 +97,6 @@ type ComplexityRoot struct {
 		Books                     func(childComplexity int) int
 		Genres                    func(childComplexity int) int
 		GetAuthorByID             func(childComplexity int, id string) int
-		GetAuthorsByBookID        func(childComplexity int, bookID string) int
 		GetAuthorsByName          func(childComplexity int, name string) int
 		GetBookByID               func(childComplexity int, id string) int
 		GetBooksByAuthorID        func(childComplexity int, authorID string) int
@@ -134,7 +135,6 @@ type QueryResolver interface {
 	GetBooksByPublicationDate(ctx context.Context, publicationDate int32) ([]*model.Book, error)
 	GetAuthorByID(ctx context.Context, id string) (*model.Author, error)
 	GetAuthorsByName(ctx context.Context, name string) ([]*model.Author, error)
-	GetAuthorsByBookID(ctx context.Context, bookID string) (*model.Author, error)
 }
 
 type executableSchema struct {
@@ -240,6 +240,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Book.Publication(childComplexity), true
 
+	case "Genre.books":
+		if e.complexity.Genre.Books == nil {
+			break
+		}
+
+		return e.complexity.Genre.Books(childComplexity), true
+
 	case "Genre.id":
 		if e.complexity.Genre.ID == nil {
 			break
@@ -253,6 +260,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Genre.Name(childComplexity), true
+
+	case "Language.books":
+		if e.complexity.Language.Books == nil {
+			break
+		}
+
+		return e.complexity.Language.Books(childComplexity), true
 
 	case "Language.id":
 		if e.complexity.Language.ID == nil {
@@ -444,18 +458,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.GetAuthorByID(childComplexity, args["ID"].(string)), true
-
-	case "Query.getAuthorsByBookID":
-		if e.complexity.Query.GetAuthorsByBookID == nil {
-			break
-		}
-
-		args, err := ec.field_Query_getAuthorsByBookID_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Query.GetAuthorsByBookID(childComplexity, args["bookID"].(string)), true
 
 	case "Query.getAuthorsByName":
 		if e.complexity.Query.GetAuthorsByName == nil {
@@ -995,29 +997,6 @@ func (ec *executionContext) field_Query_getAuthorByID_argsID(
 ) (string, error) {
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("ID"))
 	if tmp, ok := rawArgs["ID"]; ok {
-		return ec.unmarshalNID2string(ctx, tmp)
-	}
-
-	var zeroVal string
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Query_getAuthorsByBookID_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
-	var err error
-	args := map[string]any{}
-	arg0, err := ec.field_Query_getAuthorsByBookID_argsBookID(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["bookID"] = arg0
-	return args, nil
-}
-func (ec *executionContext) field_Query_getAuthorsByBookID_argsBookID(
-	ctx context.Context,
-	rawArgs map[string]any,
-) (string, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("bookID"))
-	if tmp, ok := rawArgs["bookID"]; ok {
 		return ec.unmarshalNID2string(ctx, tmp)
 	}
 
@@ -1707,6 +1686,8 @@ func (ec *executionContext) fieldContext_Book_genres(_ context.Context, field gr
 				return ec.fieldContext_Genre_id(ctx, field)
 			case "name":
 				return ec.fieldContext_Genre_name(ctx, field)
+			case "books":
+				return ec.fieldContext_Genre_books(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Genre", field.Name)
 		},
@@ -1801,6 +1782,8 @@ func (ec *executionContext) fieldContext_Book_language(_ context.Context, field 
 				return ec.fieldContext_Language_id(ctx, field)
 			case "name":
 				return ec.fieldContext_Language_name(ctx, field)
+			case "books":
+				return ec.fieldContext_Language_books(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Language", field.Name)
 		},
@@ -1896,6 +1879,66 @@ func (ec *executionContext) fieldContext_Genre_name(_ context.Context, field gra
 	return fc, nil
 }
 
+func (ec *executionContext) _Genre_books(ctx context.Context, field graphql.CollectedField, obj *model.Genre) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Genre_books(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Books, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Book)
+	fc.Result = res
+	return ec.marshalNBook2ᚕᚖgithubᚗcomᚋAssassinRobotᚋauthorᚋgraphᚋmodelᚐBookᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Genre_books(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Genre",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Book_id(ctx, field)
+			case "name":
+				return ec.fieldContext_Book_name(ctx, field)
+			case "publication":
+				return ec.fieldContext_Book_publication(ctx, field)
+			case "authors":
+				return ec.fieldContext_Book_authors(ctx, field)
+			case "genres":
+				return ec.fieldContext_Book_genres(ctx, field)
+			case "pages":
+				return ec.fieldContext_Book_pages(ctx, field)
+			case "language":
+				return ec.fieldContext_Book_language(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Book", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Language_id(ctx context.Context, field graphql.CollectedField, obj *model.Language) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Language_id(ctx, field)
 	if err != nil {
@@ -1979,6 +2022,66 @@ func (ec *executionContext) fieldContext_Language_name(_ context.Context, field 
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Language_books(ctx context.Context, field graphql.CollectedField, obj *model.Language) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Language_books(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Books, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Book)
+	fc.Result = res
+	return ec.marshalNBook2ᚕᚖgithubᚗcomᚋAssassinRobotᚋauthorᚋgraphᚋmodelᚐBookᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Language_books(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Language",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Book_id(ctx, field)
+			case "name":
+				return ec.fieldContext_Book_name(ctx, field)
+			case "publication":
+				return ec.fieldContext_Book_publication(ctx, field)
+			case "authors":
+				return ec.fieldContext_Book_authors(ctx, field)
+			case "genres":
+				return ec.fieldContext_Book_genres(ctx, field)
+			case "pages":
+				return ec.fieldContext_Book_pages(ctx, field)
+			case "language":
+				return ec.fieldContext_Book_language(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Book", field.Name)
 		},
 	}
 	return fc, nil
@@ -2165,6 +2268,8 @@ func (ec *executionContext) fieldContext_Mutation_createLanguage(ctx context.Con
 				return ec.fieldContext_Language_id(ctx, field)
 			case "name":
 				return ec.fieldContext_Language_name(ctx, field)
+			case "books":
+				return ec.fieldContext_Language_books(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Language", field.Name)
 		},
@@ -2226,6 +2331,8 @@ func (ec *executionContext) fieldContext_Mutation_createNewGenre(ctx context.Con
 				return ec.fieldContext_Genre_id(ctx, field)
 			case "name":
 				return ec.fieldContext_Genre_name(ctx, field)
+			case "books":
+				return ec.fieldContext_Genre_books(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Genre", field.Name)
 		},
@@ -2425,6 +2532,8 @@ func (ec *executionContext) fieldContext_Mutation_updateLanguage(ctx context.Con
 				return ec.fieldContext_Language_id(ctx, field)
 			case "name":
 				return ec.fieldContext_Language_name(ctx, field)
+			case "books":
+				return ec.fieldContext_Language_books(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Language", field.Name)
 		},
@@ -2486,6 +2595,8 @@ func (ec *executionContext) fieldContext_Mutation_updateGenre(ctx context.Contex
 				return ec.fieldContext_Genre_id(ctx, field)
 			case "name":
 				return ec.fieldContext_Genre_name(ctx, field)
+			case "books":
+				return ec.fieldContext_Genre_books(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Genre", field.Name)
 		},
@@ -2883,6 +2994,8 @@ func (ec *executionContext) fieldContext_Query_genres(_ context.Context, field g
 				return ec.fieldContext_Genre_id(ctx, field)
 			case "name":
 				return ec.fieldContext_Genre_name(ctx, field)
+			case "books":
+				return ec.fieldContext_Genre_books(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Genre", field.Name)
 		},
@@ -2933,6 +3046,8 @@ func (ec *executionContext) fieldContext_Query_languages(_ context.Context, fiel
 				return ec.fieldContext_Language_id(ctx, field)
 			case "name":
 				return ec.fieldContext_Language_name(ctx, field)
+			case "books":
+				return ec.fieldContext_Language_books(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Language", field.Name)
 		},
@@ -3494,73 +3609,6 @@ func (ec *executionContext) fieldContext_Query_getAuthorsByName(ctx context.Cont
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_getAuthorsByName_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Query_getAuthorsByBookID(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Query_getAuthorsByBookID(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GetAuthorsByBookID(rctx, fc.Args["bookID"].(string))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*model.Author)
-	fc.Result = res
-	return ec.marshalNAuthor2ᚖgithubᚗcomᚋAssassinRobotᚋauthorᚋgraphᚋmodelᚐAuthor(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Query_getAuthorsByBookID(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Query",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Author_id(ctx, field)
-			case "name":
-				return ec.fieldContext_Author_name(ctx, field)
-			case "born":
-				return ec.fieldContext_Author_born(ctx, field)
-			case "died":
-				return ec.fieldContext_Author_died(ctx, field)
-			case "books":
-				return ec.fieldContext_Author_books(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Author", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Query_getAuthorsByBookID_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -5982,6 +6030,11 @@ func (ec *executionContext) _Genre(ctx context.Context, sel ast.SelectionSet, ob
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "books":
+			out.Values[i] = ec._Genre_books(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -6023,6 +6076,11 @@ func (ec *executionContext) _Language(ctx context.Context, sel ast.SelectionSet,
 			}
 		case "name":
 			out.Values[i] = ec._Language_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "books":
+			out.Values[i] = ec._Language_books(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -6446,28 +6504,6 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_getAuthorsByName(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx,
-					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
-		case "getAuthorsByBookID":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_getAuthorsByBookID(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}

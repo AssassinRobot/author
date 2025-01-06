@@ -19,11 +19,13 @@ type Book {
 type Genre {
   id:ID!
   name:String!
+  books: [Book!]!
 }
 
 type Language {
   id:ID!
   name:String!
+  books: [Book!]!
 }
 
 
@@ -40,7 +42,6 @@ type Query {
   getBooksByPublicationDate(publicationDate:Int!):[Book!]!
   getAuthorByID(ID:ID!):Author!
   getAuthorsByName(name:String!):[Author!]!
-  getAuthorsByBookID(bookID:ID!):Author!
 }
 
 input NewAuthor {

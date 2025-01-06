@@ -21,13 +21,15 @@ type Book struct {
 }
 
 type Genre struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
+	ID    string  `json:"id"`
+	Name  string  `json:"name"`
+	Books []*Book `json:"books"`
 }
 
 type Language struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
+	ID    string  `json:"id"`
+	Name  string  `json:"name"`
+	Books []*Book `json:"books"`
 }
 
 type Mutation struct {

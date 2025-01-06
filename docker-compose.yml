@@ -1,0 +1,13 @@
+version: '3.30'
+
+services:
+  postgres:
+    image: postgres:latest
+    restart: always
+    container_name: graphql_postgres
+    environment:
+      POSTGRES_DB: graphql
+      POSTGRES_PASSWORD: password
+      POSTGRES_USER: user
+    ports:
+      - "5432:5432"

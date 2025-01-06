@@ -4,12 +4,14 @@ import "time"
 
 type Book struct {
 	ID          int
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
 	Name        string
 	Publication int
-	Authors     []*Author
-	Genres      []*Genre
 	Pages       int
-	Language    *Language
+	LanguageID  int      
+	Language    *Language `gorm:"foreignKey:LanguageID"` 
+	Authors     []*Author `gorm:"many2many:book_authors;"`
+	Genres      []*Genre  `gorm:"many2many:book_genres;"`
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
 }
+

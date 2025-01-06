@@ -1,4 +1,4 @@
-package main
+package server
 
 import (
 	"log"
@@ -9,20 +9,19 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler/lru"
 	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/99designs/gqlgen/graphql/playground"
-	"github.com/AssassinRobot/author/config"
-	"github.com/AssassinRobot/author/database"
 	"github.com/AssassinRobot/author/graph"
+	"github.com/AssassinRobot/author/internal/repository"
 	"github.com/vektah/gqlparser/v2/ast"
 )
 
-func main() {
-	serverPort, DBUrl := config.GetConfigs()
-	_, err := database.GetPostgresqlDB(DBUrl)
-	if err != nil {
-		panic(err)
-	}
-
-	srv := handler.New(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{}}))
+func InitializeServer(port string,authorRepo repository.AuthorRepository,bookRepo repository.BookRepository,genre repository.GenreRepository,languageRepo repository.LanguageRepository) {
+	srv := handler.New(graph.NewExecutableSchema(graph.Config{
+		Resolvers: &graph.Resolver{
+			AuthorRepo:authorRepo,
+			BookRepo: bookRepo,
+			GenreRepo: genre,
+			LanguageRepo: languageRepo,
+		}}))
 
 	srv.AddTransport(transport.Options{})
 	srv.AddTransport(transport.GET{})
@@ -38,6 +37,5 @@ func main() {
 	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
 	http.Handle("/query", srv)
 
-	log.Printf("connect to http://localhost:%s/ for GraphQL playground", serverPort)
-	log.Fatal(http.ListenAndServe(":"+serverPort, nil))
+	log.Fatal(http.ListenAndServe(":"+port, nil))
 }

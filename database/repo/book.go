@@ -19,6 +19,16 @@ func NewBookRepository(db *gorm.DB) repository.BookRepository {
 	}
 }
 
+func (r *bookRepository) FindByIDs(ctx context.Context, IDs []int) ([]*model.Book, error) {
+	var books []*model.Book
+	err := r.db.WithContext(ctx).Where("id IN ?", IDs).Find(&books).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return books, nil
+}
+
 func (r *bookRepository) GetAllBooks(ctx context.Context) ([]*model.Book, error) {
 	var books []*model.Book
 
@@ -26,7 +36,7 @@ func (r *bookRepository) GetAllBooks(ctx context.Context) ([]*model.Book, error)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	return books, nil
 }
 
@@ -68,8 +78,8 @@ func (r *bookRepository) GetBooksByGenreID(ctx context.Context, genreID int) ([]
 
 func (r *bookRepository) GetBooksByAuthorID(ctx context.Context, authorID int) ([]*model.Book, error) {
 	var books []*model.Book
-	
-	err := r.db.WithContext(ctx).Preload("Language").Preload("Authors").Preload("Genres").Joins("JOIN book_authors ON book_authors.book_id = books.id").Where("book_authors.author_id = ?", authorID).Find(&books).Error;
+
+	err := r.db.WithContext(ctx).Preload("Language").Preload("Authors").Preload("Genres").Joins("JOIN book_authors ON book_authors.book_id = books.id").Where("book_authors.author_id = ?", authorID).Find(&books).Error
 	if err != nil {
 		return nil, err
 	}
@@ -108,7 +118,7 @@ func (r *bookRepository) CreateBook(ctx context.Context, bookModel *model.Book) 
 
 func (r *bookRepository) UpdateBookByID(ctx context.Context, ID int, bookModel *model.Book) (*model.Book, error) {
 	err := r.db.WithContext(ctx).Model(&model.Book{}).Where("id = ?", ID).Updates(bookModel).Error
-	
+
 	if err != nil {
 		return nil, err
 	}
@@ -118,7 +128,7 @@ func (r *bookRepository) UpdateBookByID(ctx context.Context, ID int, bookModel *
 
 func (r *bookRepository) DeleteBookByID(ctx context.Context, ID int) error {
 	err := r.db.WithContext(ctx).Delete(&model.Book{}, ID).Error
-	
+
 	if err != nil {
 		return err
 	}

@@ -7,6 +7,7 @@ import (
 )
 
 type GenreRepository interface {
+	FindByIDs(ctx context.Context, IDs []int) ([]*model.Genre, error)
 	GetAllGenres(ctx context.Context) ([]*model.Genre, error)
 	GetGenreByID(ctx context.Context, ID int) (*model.Genre, error)
 	CreateGenre(ctx context.Context, genreModel *model.Genre) (*model.Genre, error)

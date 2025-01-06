@@ -19,6 +19,16 @@ func NewAuthorRepository(db *gorm.DB) repository.AuthorRepository {
 	}
 }
 
+func (r *authorRepository) FindByIDs(ctx context.Context, IDs []int) ([]*model.Author, error) {
+	var authors []*model.Author
+	err := r.db.WithContext(ctx).Where("id IN ?", IDs).Find(&authors).Error
+	if err != nil {
+		return nil, err
+	}
+	
+	return authors, nil
+}
+
 func (a *authorRepository) GetAllAuthors(ctx context.Context) ([]*model.Author, error) {
 	var authors = []*model.Author{}
 

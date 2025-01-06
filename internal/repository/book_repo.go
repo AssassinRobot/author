@@ -7,6 +7,7 @@ import (
 )
 
 type BookRepository interface {
+	FindByIDs(ctx context.Context, IDs []int) ([]*model.Book, error)
 	GetAllBooks(ctx context.Context)([]*model.Book,error)
 	GetBookByID(ctx context.Context, ID int) (*model.Book, error)
 	GetBooksByLanguageID(ctx context.Context,languageID int) ([]*model.Book, error)

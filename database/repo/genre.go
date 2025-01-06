@@ -19,6 +19,16 @@ func NewGenreRepository(db *gorm.DB) repository.GenreRepository {
 	}
 }
 
+func (r *genreRepository) FindByIDs(ctx context.Context, IDs []int) ([]*model.Genre, error) {
+	var genres []*model.Genre
+	err := r.db.WithContext(ctx).Where("id IN ?", IDs).Find(&genres).Error
+	if err != nil {
+		return nil, err
+	}
+	
+	return genres, nil
+}
+
 func (a *genreRepository) GetAllGenres(ctx context.Context) ([]*model.Genre, error) {
 	var genres = []*model.Genre{}
 

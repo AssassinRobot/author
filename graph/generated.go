@@ -5524,7 +5524,7 @@ func (ec *executionContext) unmarshalInputNewAuthor(ctx context.Context, obj any
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"name", "born", "died", "booksID"}
+	fieldsInOrder := [...]string{"name", "born", "died"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -5552,13 +5552,6 @@ func (ec *executionContext) unmarshalInputNewAuthor(ctx context.Context, obj any
 				return it, err
 			}
 			it.Died = data
-		case "booksID":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("booksID"))
-			data, err := ec.unmarshalNID2ᚕstringᚄ(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.BooksID = data
 		}
 	}
 

@@ -36,10 +36,9 @@ type Mutation struct {
 }
 
 type NewAuthor struct {
-	Name    string   `json:"name"`
-	Born    string   `json:"born"`
-	Died    string   `json:"died"`
-	BooksID []string `json:"booksID"`
+	Name string `json:"name"`
+	Born string `json:"born"`
+	Died string `json:"died"`
 }
 
 type NewBook struct {

@@ -48,7 +48,6 @@ input NewAuthor {
   name: String!
   born:String!
   died:String!
-  booksID: [ID!]!
 }
 
 input NewBook {

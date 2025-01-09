@@ -104,6 +104,7 @@ func (r *mutationResolver) UpdateAuthor(ctx context.Context, input model.UpdateA
 	ID := convert.StringToInt(input.ID)
 
 	author := new(in.Author)
+	author.ID = ID
 	author.Name = input.Name
 	author.Born = input.Born
 	author.Died = input.Died
@@ -129,6 +130,7 @@ func (r *mutationResolver) UpdateBook(ctx context.Context, input model.UpdateBoo
 	ID := convert.StringToInt(input.ID)
 
 	book := new(in.Book)
+	book.ID = ID
 	book.Name = input.Name
 	book.Pages = int(input.Pages)
 	book.Publication = int(input.Publication)
@@ -172,7 +174,7 @@ func (r *mutationResolver) UpdateLanguage(ctx context.Context, input model.Updat
 		return nil, err
 	}
 
-	graphLanguage := convert.ConvertLanguageWithBooks(updatedLanguage)
+graphLanguage := convert.ConvertLanguageWithBooks(updatedLanguage)
 
 	return graphLanguage, nil
 }
@@ -375,7 +377,7 @@ func (r *queryResolver) GetAuthorByID(ctx context.Context, id string) (*model.Au
 
 // GetAuthorsByName is the resolver for the getAuthorsByName field.
 func (r *queryResolver) GetAuthorsByName(ctx context.Context, name string) ([]*model.Author, error) {
-	authors, err := r.AuthorRepo.GetAuthorsByNames(ctx, name)
+	authors, err := r.AuthorRepo.GetAuthorsByName(ctx, name)
 	if err != nil {
 		return nil, err
 	}

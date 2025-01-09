@@ -19,9 +19,9 @@ func NewBookRepository(db *gorm.DB) repository.BookRepository {
 	}
 }
 
-func (r *bookRepository) FindByIDs(ctx context.Context, IDs []string)([]*model.Book, error) {
+func (r *bookRepository) FindByIDs(ctx context.Context, IDs []string) ([]*model.Book, error) {
 	var books []*model.Book
-	err := r.db.WithContext(ctx).Where("id IN ?", IDs).Find(&books).Error
+	err := r.db.WithContext(ctx).Where("id IN ?", IDs).Preload("Genres").Preload("Language").Find(&books).Error
 	if err != nil {
 		return nil, err
 	}
@@ -127,10 +127,26 @@ func (r *bookRepository) UpdateBookByID(ctx context.Context, ID int, bookModel *
 }
 
 func (r *bookRepository) DeleteBookByID(ctx context.Context, ID int) error {
-	err := r.db.WithContext(ctx).Delete(&model.Book{}, ID).Error
-
+	err := r.db.WithContext(ctx).
+		Model(&model.Book{ID: ID}).
+		Association("Authors").
+		Clear()
 	if err != nil {
 		return err
 	}
+
+	err = r.db.WithContext(ctx).
+		Model(&model.Book{ID: ID}).
+		Association("Genres").
+		Clear()
+	if err != nil {
+		return err
+	}
+
+	err = r.db.WithContext(ctx).Delete(&model.Book{}, ID).Error
+	if err != nil {
+		return err
+	}
+	
 	return nil
 }

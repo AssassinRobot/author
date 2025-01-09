@@ -19,22 +19,20 @@ func NewGenreRepository(db *gorm.DB) repository.GenreRepository {
 	}
 }
 
-func (r *genreRepository) FindByIDs(ctx context.Context, IDs []string)([]*model.Genre, error) {
+func (r *genreRepository) FindByIDs(ctx context.Context, IDs []string) ([]*model.Genre, error) {
 	var genres []*model.Genre
 	err := r.db.WithContext(ctx).Where("id IN ?", IDs).Find(&genres).Error
 	if err != nil {
 		return nil, err
 	}
-	
+
 	return genres, nil
 }
 
 func (a *genreRepository) GetAllGenres(ctx context.Context) ([]*model.Genre, error) {
 	var genres = []*model.Genre{}
 
-	err := a.db.WithContext(ctx).Preload("Books").Find(&genres).Error
-
-	// err := a.db.WithContext(ctx).Find(&genres).Error
+	err := a.db.WithContext(ctx).Preload("Books").Preload("Books.Language").Preload("Books.Genres").Find(&genres).Error
 
 	return genres, err
 }
@@ -42,7 +40,7 @@ func (a *genreRepository) GetAllGenres(ctx context.Context) ([]*model.Genre, err
 func (a *genreRepository) GetGenreByID(ctx context.Context, ID int) (*model.Genre, error) {
 	genre := new(model.Genre)
 
-	err := a.db.WithContext(ctx).First(genre, ID).Error
+	err := a.db.WithContext(ctx).Preload("Books").Preload("Books.Language").Preload("Books.Genres").First(genre, ID).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, ErrGenreNotFound
@@ -52,21 +50,6 @@ func (a *genreRepository) GetGenreByID(ctx context.Context, ID int) (*model.Genr
 
 	return genre, nil
 }
-
-// func (a *genreRepository) GetAuthorsByNames(ctx context.Context, name string) ([]*model.genre, error) {
-// 	var genres []*model.Genre
-
-// 	err := a.db.WithContext(ctx).Preload("Books").Where("name = ?", name).Find(&genres).Error
-
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	// if len(genres) == 0 {
-// 	// 		return nil, ErrBookNotFound
-// 	// }
-
-// 	return genres, err
-// }
 
 func (a *genreRepository) CreateGenre(ctx context.Context, genreModel *model.Genre) (*model.Genre, error) {
 	tx := a.db.Create(genreModel)
@@ -79,20 +62,30 @@ func (a *genreRepository) CreateGenre(ctx context.Context, genreModel *model.Gen
 }
 
 func (a *genreRepository) UpdateGenreByID(ctx context.Context, ID int, name string) (*model.Genre, error) {
-	savedGenre, err := a.GetGenreByID(ctx, ID)
+	err := a.db.Model(&model.Genre{}).Where("id = ?", ID).Update("name", name).Error
+	
 	if err != nil {
 		return nil, err
 	}
 
-	savedGenre.Name = name
+	genre,err := a.GetGenreByID(ctx,ID)
+	if err != nil {
+		return nil, err
+	}
 
-	return savedGenre, nil
+	return genre, nil
 }
 
 func (a *genreRepository) DeleteGenreByID(ctx context.Context, ID int) error {
-	genre := new(model.Genre)
+	err := a.db.WithContext(ctx).
+		Model(&model.Genre{ID: ID}).
+		Association("Books").
+		Clear()
+	if err != nil {
+		return err
+	}
 
-	result := a.db.WithContext(ctx).Delete(genre, ID)
+	result := a.db.WithContext(ctx).Delete(&model.Genre{}, ID)
 	if result.Error != nil {
 		return result.Error
 	}

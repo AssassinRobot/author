@@ -32,7 +32,11 @@ func (r *authorRepository) FindByIDs(ctx context.Context, IDs []string) ([]*mode
 func (a *authorRepository) GetAllAuthors(ctx context.Context) ([]*model.Author, error) {
 	var authors = []*model.Author{}
 
-	err := a.db.WithContext(ctx).Preload("Books").Find(&authors).Error
+	err := a.db.WithContext(ctx).
+		Preload("Books").
+		Preload("Books.Genres").
+		Preload("Books.Language").
+		Find(&authors).Error
 
 	return authors, err
 }
@@ -40,7 +44,7 @@ func (a *authorRepository) GetAllAuthors(ctx context.Context) ([]*model.Author, 
 func (a *authorRepository) GetAuthorByID(ctx context.Context, ID int) (*model.Author, error) {
 	Author := new(model.Author)
 
-	err := a.db.WithContext(ctx).Preload("Books").First(Author, ID).Error
+	err := a.db.WithContext(ctx).Preload("Books").Preload("Books.Genres").Preload("Books.Language").First(Author, ID).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, ErrAuthorNotFound
@@ -51,17 +55,13 @@ func (a *authorRepository) GetAuthorByID(ctx context.Context, ID int) (*model.Au
 	return Author, nil
 }
 
-func (a *authorRepository) GetAuthorsByNames(ctx context.Context, name string) ([]*model.Author, error) {
+func (a *authorRepository) GetAuthorsByName(ctx context.Context, name string) ([]*model.Author, error) {
 	var authors []*model.Author
 
-	err := a.db.WithContext(ctx).Preload("Books").Where("name = ?", name).Find(&authors).Error
-
+	err := a.db.WithContext(ctx).Preload("Books").Preload("Books.Genres").Preload("Books.Language").Where("name LIKE ?", "%"+name+"%").Find(&authors).Error
 	if err != nil {
 		return nil, err
 	}
-	// if len(authors) == 0 {
-	// 		return nil, ErrBookNotFound
-	// }
 
 	return authors, err
 }
@@ -77,27 +77,29 @@ func (a *authorRepository) CreateAuthor(ctx context.Context, authorModel *model.
 }
 
 func (a *authorRepository) UpdateAuthorByID(ctx context.Context, ID int, authorModel *model.Author) (*model.Author, error) {
-	savedAuthor, err := a.GetAuthorByID(ctx, ID)
+	err := a.db.WithContext(ctx).Model(&model.Author{}).Where("id = ?", ID).Updates(authorModel).Error
 	if err != nil {
 		return nil, err
 	}
 
-	savedAuthor.Name = authorModel.Name
-	savedAuthor.Born = authorModel.Born
-	savedAuthor.Died = authorModel.Died
-
-	err = a.db.Model(savedAuthor).Association("Books").Replace(authorModel.Books)
+	authorModel,err = a.GetAuthorByID(ctx,ID)
 	if err != nil {
 		return nil, err
 	}
-
-	return savedAuthor, nil
+	
+	return authorModel, nil
 }
 
 func (a *authorRepository) DeleteAuthorByID(ctx context.Context, ID int) error {
-	Author := new(model.Author)
+	err := a.db.WithContext(ctx).
+		Model(&model.Author{ID: ID}).
+		Association("Books").
+		Clear()
+	if err != nil {
+		return err
+	}
 
-	result := a.db.WithContext(ctx).Delete(Author, ID)
+	result := a.db.WithContext(ctx).Delete(&model.Author{}, ID)
 	if result.Error != nil {
 		return result.Error
 	}

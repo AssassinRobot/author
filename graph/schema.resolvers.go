@@ -6,129 +6,382 @@ package graph
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/AssassinRobot/author/graph/model"
+	in "github.com/AssassinRobot/author/internal/model"
+	convert "github.com/AssassinRobot/author/utils"
 )
 
 // CreateAuthor is the resolver for the createAuthor field.
 func (r *mutationResolver) CreateAuthor(ctx context.Context, input model.NewAuthor) (*model.Author, error) {
-	panic(fmt.Errorf("not implemented: CreateAuthor - createAuthor"))
+	author := new(in.Author)
+
+	author.Name = input.Name
+	author.Born = input.Born
+	author.Died = input.Died
+
+	savedAuthor, err := r.AuthorRepo.CreateAuthor(ctx, author)
+	if err != nil {
+		return nil, err
+	}
+
+	graphAuthor := convert.ConvertAuthorWithoutBooks(savedAuthor)
+
+	return graphAuthor, nil
 }
 
 // CreateBook is the resolver for the createBook field.
 func (r *mutationResolver) CreateBook(ctx context.Context, input model.NewBook) (*model.Book, error) {
-	panic(fmt.Errorf("not implemented: CreateBook - createBook"))
+	book := new(in.Book)
+
+	book.Name = input.Name
+	book.Pages = int(input.Pages)
+	book.Publication = int(input.Publication)
+	book.LanguageID = convert.StringToInt(input.LanguageID)
+	language, err := r.LanguageRepo.GetLanguageByID(ctx, book.LanguageID)
+	if err != nil {
+		return nil, err
+	}
+
+	book.Language = language
+
+	authors, err := r.AuthorRepo.FindByIDs(ctx, input.AuthorsID)
+	if err != nil {
+		return nil, err
+	}
+	book.Authors = authors
+
+	genres, err := r.GenreRepo.FindByIDs(ctx, input.GenresID)
+	if err != nil {
+		return nil, err
+	}
+	book.Genres = genres
+
+	savedBook, err := r.BookRepo.CreateBook(ctx, book)
+	if err != nil {
+		return nil, err
+	}
+
+	graphBook := convert.ConvertBookWithAuthors(savedBook)
+
+	return graphBook, nil
 }
 
 // CreateLanguage is the resolver for the createLanguage field.
 func (r *mutationResolver) CreateLanguage(ctx context.Context, input model.NewLanguage) (*model.Language, error) {
-	panic(fmt.Errorf("not implemented: CreateLanguage - createLanguage"))
+	language := new(in.Language)
+
+	language.Name = input.Name
+
+	savedLanguage, err := r.LanguageRepo.CreateLanguage(ctx, language)
+	if err != nil {
+		return nil, err
+	}
+
+	graphLanguage := convert.ConvertLanguageWithoutBooks(savedLanguage)
+
+	return graphLanguage, nil
 }
 
 // CreateNewGenre is the resolver for the createNewGenre field.
 func (r *mutationResolver) CreateNewGenre(ctx context.Context, input model.NewGenre) (*model.Genre, error) {
-	panic(fmt.Errorf("not implemented: CreateNewGenre - createNewGenre"))
+	genre := new(in.Genre)
+
+	genre.Name = input.Name
+
+	savedGenre, err := r.GenreRepo.CreateGenre(ctx, genre)
+	if err != nil {
+		return nil, err
+	}
+
+	graphGenre := convert.ConvertGenreWithoutBooks(savedGenre)
+
+	return graphGenre, nil
 }
 
 // UpdateAuthor is the resolver for the updateAuthor field.
 func (r *mutationResolver) UpdateAuthor(ctx context.Context, input model.UpdateAuthor) (*model.Author, error) {
-	panic(fmt.Errorf("not implemented: UpdateAuthor - updateAuthor"))
+	ID := convert.StringToInt(input.ID)
+
+	author := new(in.Author)
+	author.Name = input.Name
+	author.Born = input.Born
+	author.Died = input.Died
+
+	authorBooks, err := r.BookRepo.FindByIDs(ctx, input.BooksID)
+	if err != nil {
+		return nil, err
+	}
+	author.Books = authorBooks
+
+	updatedAuthor, err := r.AuthorRepo.UpdateAuthorByID(ctx, ID, author)
+	if err != nil {
+		return nil, err
+	}
+
+	graphAuthor := convert.ConvertAuthorWithBooks(updatedAuthor)
+
+	return graphAuthor, nil
 }
 
 // UpdateBook is the resolver for the updateBook field.
 func (r *mutationResolver) UpdateBook(ctx context.Context, input model.UpdateBook) (*model.Book, error) {
-	panic(fmt.Errorf("not implemented: UpdateBook - updateBook"))
+	ID := convert.StringToInt(input.ID)
+
+	book := new(in.Book)
+	book.Name = input.Name
+	book.Pages = int(input.Pages)
+	book.Publication = int(input.Publication)
+
+	bookAuthor, err := r.AuthorRepo.FindByIDs(ctx, input.AuthorIDs)
+	if err != nil {
+		return nil, err
+	}
+	book.Authors = bookAuthor
+
+	bookGenre, err := r.GenreRepo.FindByIDs(ctx, input.GenreIDs)
+	if err != nil {
+		return nil, err
+	}
+	book.Genres = bookGenre
+
+	languageID := convert.StringToInt(input.LanguageID)
+	bookLanguage, err := r.LanguageRepo.GetLanguageByID(ctx, languageID)
+	if err != nil {
+		return nil, err
+	}
+	book.LanguageID = languageID
+	book.Language = bookLanguage
+
+	updatedBook, err := r.BookRepo.UpdateBookByID(ctx, ID, book)
+	if err != nil {
+		return nil, err
+	}
+
+	graphBook := convert.ConvertBookWithAuthors(updatedBook)
+
+	return graphBook, nil
 }
 
 // UpdateLanguage is the resolver for the updateLanguage field.
 func (r *mutationResolver) UpdateLanguage(ctx context.Context, input model.UpdateLanguage) (*model.Language, error) {
-	panic(fmt.Errorf("not implemented: UpdateLanguage - updateLanguage"))
+	ID := convert.StringToInt(input.ID)
+
+	updatedLanguage, err := r.LanguageRepo.UpdateLanguageByID(ctx, ID, input.Name)
+	if err != nil {
+		return nil, err
+	}
+
+	graphLanguage := convert.ConvertLanguageWithBooks(updatedLanguage)
+
+	return graphLanguage, nil
 }
 
 // UpdateGenre is the resolver for the updateGenre field.
 func (r *mutationResolver) UpdateGenre(ctx context.Context, input model.UpdateGenre) (*model.Genre, error) {
-	panic(fmt.Errorf("not implemented: UpdateGenre - updateGenre"))
+	ID := convert.StringToInt(input.ID)
+
+	updatedGenre, err := r.GenreRepo.UpdateGenreByID(ctx, ID, input.Name)
+	if err != nil {
+		return nil, err
+	}
+
+	graphGenre := convert.ConvertGenreWithBooks(updatedGenre)
+
+	return graphGenre, nil
 }
 
 // DeleteAuthorByID is the resolver for the deleteAuthorByID field.
 func (r *mutationResolver) DeleteAuthorByID(ctx context.Context, id string) (string, error) {
-	panic(fmt.Errorf("not implemented: DeleteAuthorByID - deleteAuthorByID"))
+	authorID := convert.StringToInt(id)
+
+	err := r.AuthorRepo.DeleteAuthorByID(ctx, authorID)
+	if err != nil {
+		return "", err
+	}
+
+	return id, nil
 }
 
 // DeleteBookByID is the resolver for the deleteBookByID field.
 func (r *mutationResolver) DeleteBookByID(ctx context.Context, id string) (string, error) {
-	panic(fmt.Errorf("not implemented: DeleteBookByID - deleteBookByID"))
+	bookID := convert.StringToInt(id)
+
+	err := r.BookRepo.DeleteBookByID(ctx, bookID)
+	if err != nil {
+		return "", err
+	}
+
+	return id, nil
 }
 
 // DeleteLanguageByID is the resolver for the deleteLanguageByID field.
 func (r *mutationResolver) DeleteLanguageByID(ctx context.Context, id string) (string, error) {
-	panic(fmt.Errorf("not implemented: DeleteLanguageByID - deleteLanguageByID"))
+	ID := convert.StringToInt(id)
+
+	err := r.LanguageRepo.DeleteLanguageByID(ctx, ID)
+	if err != nil {
+		return "", err
+	}
+
+	return id, nil
 }
 
 // DeleteGenreByID is the resolver for the deleteGenreByID field.
 func (r *mutationResolver) DeleteGenreByID(ctx context.Context, id string) (string, error) {
-	panic(fmt.Errorf("not implemented: DeleteGenreByID - deleteGenreByID"))
+	ID := convert.StringToInt(id)
+
+	err := r.GenreRepo.DeleteGenreByID(ctx, ID)
+	if err != nil {
+		return "", err
+	}
+
+	return id, nil
 }
 
 // Books is the resolver for the books field.
 func (r *queryResolver) Books(ctx context.Context) ([]*model.Book, error) {
-	panic(fmt.Errorf("not implemented: Books - books"))
+	books, err := r.BookRepo.GetAllBooks(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	graphBooks := convert.ConvertBooksWithAuthors(books)
+
+	return graphBooks, nil
 }
 
 // Authors is the resolver for the authors field.
 func (r *queryResolver) Authors(ctx context.Context) ([]*model.Author, error) {
-	panic(fmt.Errorf("not implemented: Authors - authors"))
+	authors, err := r.AuthorRepo.GetAllAuthors(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	graphAuthors := convert.ConvertAuthorsWithBooks(authors)
+
+	return graphAuthors, nil
 }
 
 // Genres is the resolver for the genres field.
 func (r *queryResolver) Genres(ctx context.Context) ([]*model.Genre, error) {
-	panic(fmt.Errorf("not implemented: Genres - genres"))
+	genres, err := r.GenreRepo.GetAllGenres(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	graphGenres := convert.ConvertGenresWithBooks(genres)
+
+	return graphGenres, nil
 }
 
 // Languages is the resolver for the languages field.
 func (r *queryResolver) Languages(ctx context.Context) ([]*model.Language, error) {
-	panic(fmt.Errorf("not implemented: Languages - languages"))
+	languages, err := r.LanguageRepo.GetAllLanguages(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	graphLanguages := convert.ConvertLanguagesWithBooks(languages)
+
+	return graphLanguages, nil
 }
 
 // GetBookByID is the resolver for the getBookByID field.
 func (r *queryResolver) GetBookByID(ctx context.Context, id string) (*model.Book, error) {
-	panic(fmt.Errorf("not implemented: GetBookByID - getBookByID"))
+	ID := convert.StringToInt(id)
+
+	book, err := r.BookRepo.GetBookByID(ctx, ID)
+	if err != nil {
+		return nil, err
+	}
+
+	graphBook := convert.ConvertBookWithAuthors(book)
+	return graphBook, nil
 }
 
 // GetBooksByName is the resolver for the getBooksByName field.
 func (r *queryResolver) GetBooksByName(ctx context.Context, name string) ([]*model.Book, error) {
-	panic(fmt.Errorf("not implemented: GetBooksByName - getBooksByName"))
+	books, err := r.BookRepo.GetBooksByName(ctx, name)
+	if err != nil {
+		return nil, err
+	}
+
+	graphBooks := convert.ConvertBooksWithAuthors(books)
+	return graphBooks, nil
 }
 
 // GetBooksByLanguageID is the resolver for the getBooksByLanguageID field.
 func (r *queryResolver) GetBooksByLanguageID(ctx context.Context, languageID string) ([]*model.Book, error) {
-	panic(fmt.Errorf("not implemented: GetBooksByLanguageID - getBooksByLanguageID"))
+	ID := convert.StringToInt(languageID)
+
+	books, err := r.BookRepo.GetBooksByLanguageID(ctx, ID)
+	if err != nil {
+		return nil, err
+	}
+
+	graphBooks := convert.ConvertBooksWithAuthors(books)
+	return graphBooks, nil
 }
 
 // GetBooksByGenreID is the resolver for the getBooksByGenreID field.
 func (r *queryResolver) GetBooksByGenreID(ctx context.Context, genreID string) ([]*model.Book, error) {
-	panic(fmt.Errorf("not implemented: GetBooksByGenreID - getBooksByGenreID"))
+	ID := convert.StringToInt(genreID)
+
+	books, err := r.BookRepo.GetBooksByGenreID(ctx, ID)
+	if err != nil {
+		return nil, err
+	}
+
+	graphBooks := convert.ConvertBooksWithAuthors(books)
+	return graphBooks, nil
 }
 
 // GetBooksByAuthorID is the resolver for the getBooksByAuthorID field.
 func (r *queryResolver) GetBooksByAuthorID(ctx context.Context, authorID string) ([]*model.Book, error) {
-	panic(fmt.Errorf("not implemented: GetBooksByAuthorID - getBooksByAuthorID"))
+	ID := convert.StringToInt(authorID)
+
+	books, err := r.BookRepo.GetBooksByAuthorID(ctx, ID)
+	if err != nil {
+		return nil, err
+	}
+
+	graphBooks := convert.ConvertBooksWithAuthors(books)
+	return graphBooks, nil
 }
 
 // GetBooksByPublicationDate is the resolver for the getBooksByPublicationDate field.
 func (r *queryResolver) GetBooksByPublicationDate(ctx context.Context, publicationDate int32) ([]*model.Book, error) {
-	panic(fmt.Errorf("not implemented: GetBooksByPublicationDate - getBooksByPublicationDate"))
+	books, err := r.BookRepo.GetBooksByPublicationDate(ctx, int(publicationDate))
+	if err != nil {
+		return nil, err
+	}
+
+	graphBooks := convert.ConvertBooksWithAuthors(books)
+	return graphBooks, nil
 }
 
 // GetAuthorByID is the resolver for the getAuthorByID field.
 func (r *queryResolver) GetAuthorByID(ctx context.Context, id string) (*model.Author, error) {
-	panic(fmt.Errorf("not implemented: GetAuthorByID - getAuthorByID"))
+	ID := convert.StringToInt(id)
+	author, err := r.AuthorRepo.GetAuthorByID(ctx, ID)
+	if err != nil {
+		return nil, err
+	}
+
+	graphAuthor := convert.ConvertAuthorWithBooks(author)
+	return graphAuthor, nil
 }
 
 // GetAuthorsByName is the resolver for the getAuthorsByName field.
 func (r *queryResolver) GetAuthorsByName(ctx context.Context, name string) ([]*model.Author, error) {
-	panic(fmt.Errorf("not implemented: GetAuthorsByName - getAuthorsByName"))
+	authors, err := r.AuthorRepo.GetAuthorsByNames(ctx, name)
+	if err != nil {
+		return nil, err
+	}
+
+	graphAuthors := convert.ConvertAuthorsWithBooks(authors)
+	return graphAuthors, nil
 }
 
 // Mutation returns MutationResolver implementation.
@@ -139,15 +392,3 @@ func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
-
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//    it when you're done.
-//  - You have helper methods in this file. Move them out to keep these resolver files clean.
-/*
-	func (r *queryResolver) GetAuthorsByBookID(ctx context.Context, bookID string) (*model.Author, error) {
-	panic(fmt.Errorf("not implemented: GetAuthorsByBookID - getAuthorsByBookID"))
-}
-*/

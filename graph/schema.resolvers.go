@@ -174,7 +174,7 @@ func (r *mutationResolver) UpdateLanguage(ctx context.Context, input model.Updat
 		return nil, err
 	}
 
-graphLanguage := convert.ConvertLanguageWithBooks(updatedLanguage)
+	graphLanguage := convert.ConvertLanguageWithBooks(updatedLanguage)
 
 	return graphLanguage, nil
 }
@@ -194,51 +194,51 @@ func (r *mutationResolver) UpdateGenre(ctx context.Context, input model.UpdateGe
 }
 
 // DeleteAuthorByID is the resolver for the deleteAuthorByID field.
-func (r *mutationResolver) DeleteAuthorByID(ctx context.Context, id string) (string, error) {
+func (r *mutationResolver) DeleteAuthorByID(ctx context.Context, id string) (*string, error) {
 	authorID := convert.StringToInt(id)
 
 	err := r.AuthorRepo.DeleteAuthorByID(ctx, authorID)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	return id, nil
+	return nil, nil
 }
 
 // DeleteBookByID is the resolver for the deleteBookByID field.
-func (r *mutationResolver) DeleteBookByID(ctx context.Context, id string) (string, error) {
+func (r *mutationResolver) DeleteBookByID(ctx context.Context, id string) (*string, error) {
 	bookID := convert.StringToInt(id)
 
 	err := r.BookRepo.DeleteBookByID(ctx, bookID)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	return id, nil
+	return nil, nil
 }
 
 // DeleteLanguageByID is the resolver for the deleteLanguageByID field.
-func (r *mutationResolver) DeleteLanguageByID(ctx context.Context, id string) (string, error) {
+func (r *mutationResolver) DeleteLanguageByID(ctx context.Context, id string) (*string, error) {
 	ID := convert.StringToInt(id)
 
 	err := r.LanguageRepo.DeleteLanguageByID(ctx, ID)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	return id, nil
+	return nil, nil
 }
 
 // DeleteGenreByID is the resolver for the deleteGenreByID field.
-func (r *mutationResolver) DeleteGenreByID(ctx context.Context, id string) (string, error) {
+func (r *mutationResolver) DeleteGenreByID(ctx context.Context, id string) (*string, error) {
 	ID := convert.StringToInt(id)
 
 	err := r.GenreRepo.DeleteGenreByID(ctx, ID)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	return id, nil
+	return nil, nil
 }
 
 // Books is the resolver for the books field.

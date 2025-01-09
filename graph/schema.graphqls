@@ -105,8 +105,8 @@ type Mutation {
   updateBook(input:updateBook!): Book!
   updateLanguage(input:updateLanguage!): Language!
   updateGenre(input:updateGenre!): Genre!
-  deleteAuthorByID(id:ID!):ID!
-  deleteBookByID(id:ID!):ID!
-  deleteLanguageByID(id:ID!):ID!
-  deleteGenreByID(id:ID!):ID!
+  deleteAuthorByID(id:ID!):ID
+  deleteBookByID(id:ID!):ID
+  deleteLanguageByID(id:ID!):ID
+  deleteGenreByID(id:ID!):ID
 }

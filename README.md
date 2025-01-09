@@ -1,7 +1,6 @@
-![Author Management System](https://icon2.cleanpng.com/20180415/wde/avuc6c8i6.webp)
+![GraphQL Logo](assets/image2.png)![GraphQL Logo](assets/image3.png)![GraphQL Logo](assets/image1.png)
 
 # Author Management System
-
 This repository is a practice and example for working with GraphQL API, contains the source code for the Author Management System, a GraphQL-based API for managing authors, books, genres, and languages.
 
 ## Table of Contents

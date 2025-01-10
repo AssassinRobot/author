@@ -3,6 +3,7 @@ package server
 import (
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/handler/extension"
@@ -14,12 +15,12 @@ import (
 	"github.com/vektah/gqlparser/v2/ast"
 )
 
-func InitializeServer(port string,authorRepo repository.AuthorRepository,bookRepo repository.BookRepository,genre repository.GenreRepository,languageRepo repository.LanguageRepository) {
+func InitializeServer(port string, authorRepo repository.AuthorRepository, bookRepo repository.BookRepository, genre repository.GenreRepository, languageRepo repository.LanguageRepository) {
 	srv := handler.New(graph.NewExecutableSchema(graph.Config{
 		Resolvers: &graph.Resolver{
-			AuthorRepo:authorRepo,
-			BookRepo: bookRepo,
-			GenreRepo: genre,
+			AuthorRepo:   authorRepo,
+			BookRepo:     bookRepo,
+			GenreRepo:    genre,
 			LanguageRepo: languageRepo,
 		}}))
 
@@ -34,8 +35,9 @@ func InitializeServer(port string,authorRepo repository.AuthorRepository,bookRep
 		Cache: lru.New[string](100),
 	})
 
-	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
-	http.Handle("/query", srv)
+	timeout := 1 * time.Second
 
+	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
+	http.Handle("/query", http.TimeoutHandler(srv, timeout, "Request timeout"))
 	log.Fatal(http.ListenAndServe(":"+port, nil))
 }
